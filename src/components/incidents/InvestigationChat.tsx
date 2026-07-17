@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot, Send, User, Loader2, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
