@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Incident, useIncidentAlerts } from "@/hooks/useIncidents";
 import { useIncidentSummary } from "@/hooks/useIncidentSummary";
 import { FileWarning, Zap, Bot, Cpu, AlertTriangle, Network, Loader2, Download, Printer } from "lucide-react";
