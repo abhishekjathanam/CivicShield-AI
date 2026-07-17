@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,7 +74,7 @@ export function RestApiForm({ connector, onSuccess, onClose }: Props) {
         name: `REST API (${new URL(endpointUrl).hostname})`,
         type: connector.type,
         status: 'active',
-        config: config as Record<string, unknown>
+        config: config as any
       });
 
       if (error) throw error;

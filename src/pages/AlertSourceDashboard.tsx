@@ -208,7 +208,7 @@ export default function AlertSourceDashboard() {
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-xl font-semibold text-foreground">ThreatLens</h1>
+              <h1 className="text-xl font-semibold text-foreground">CivicShield</h1>
               <p className="text-xs text-muted-foreground">Alert Source Portal</p>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function AlertSourceDashboard() {
               Submit Security Alert
             </CardTitle>
             <CardDescription>
-              Submit alerts to the ThreatLens Defense Team for automated analysis and correlation.
+              Submit alerts to the CivicShield Defense Team for automated analysis and correlation.
             </CardDescription>
           </CardHeader>
           <CardContent>

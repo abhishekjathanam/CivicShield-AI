@@ -174,7 +174,7 @@ export default function Connectors() {
               <Plug className="h-10 w-10 mb-4 opacity-50" />
               <p className="text-lg font-medium text-foreground">No Connectors Configured</p>
               <p className="text-sm max-w-sm mt-2">
-                Select an available connector below to begin ingesting alerts into ThreatLens.
+                Select an available connector below to begin ingesting alerts into CivicShield.
               </p>
             </CardContent>
           </Card>

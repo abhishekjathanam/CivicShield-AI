@@ -25,7 +25,7 @@ export function AppHeader() {
         <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
         <div className="flex items-center gap-2">
           <Shield className="h-6 w-6 text-primary" />
-          <span className="font-semibold text-lg text-foreground">ThreatLens</span>
+          <span className="font-semibold text-lg text-foreground">CivicShield</span>
         </div>
         <Badge variant="outline" className="ml-4 text-xs border-primary/30 text-primary">
           Public Sector Defense Environment

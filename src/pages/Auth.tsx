@@ -184,7 +184,7 @@ export default function Auth() {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-white" />
-            <span className="text-xl font-semibold text-white">ThreatLens</span>
+            <span className="text-xl font-semibold text-white">CivicShield</span>
           </div>
 
           {/* Main Content */}
@@ -213,7 +213,7 @@ export default function Auth() {
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center mb-8">
             <Shield className="h-10 w-10 text-primary mr-2" />
-            <span className="text-2xl font-bold text-gray-900">ThreatLens</span>
+            <span className="text-2xl font-bold text-gray-900">CivicShield</span>
           </div>
 
           <div className="text-center">

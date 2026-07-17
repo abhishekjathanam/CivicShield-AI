@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ConnectorConfig } from "@/pages/Connectors";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,7 +80,7 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
         name: `CSV Upload (${file.name})`,
         type: connector.type,
         status: 'active',
-        config: config as Record<string, unknown>,
+        config: config as any,
         records_imported: 0 // In a real app we'd parse and upload records here
       });
 
