@@ -2,13 +2,17 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import type { AppRole, Organization } from "@/integrations/supabase/orgTypes";
 
-type AppRole = "admin" | "analyst" | "alert_source";
+export type { AppRole };
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
+  organization: Organization | null;
+  orgLoading: boolean;
+  refreshOrganization: () => Promise<void>;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null; role?: AppRole | null }>;
   signUp: (email: string, password: string, displayName?: string, selectedRole?: string) => Promise<{ error: Error | null }>;
@@ -21,6 +25,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [orgLoading, setOrgLoading] = useState(true);
   const [loading, setLoading] = useState(true);
 
   const fetchUserRole = async (userId: string): Promise<AppRole | null> => {
@@ -56,6 +62,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchOrganization = async (userId: string): Promise<Organization | null> => {
+    setOrgLoading(true);
+    try {
+      const { data: membership, error: memberError } = await (supabase as any)
+        .from("organization_members")
+        .select("organization_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (memberError) {
+        // Table likely doesn't exist yet (migration not applied) — treat as no org.
+        console.warn("[org] membership lookup failed:", memberError.message);
+        setOrganization(null);
+        return null;
+      }
+      if (!membership) {
+        setOrganization(null);
+        return null;
+      }
+
+      const { data: org, error: orgError } = await (supabase as any)
+        .from("organizations")
+        .select("*")
+        .eq("id", membership.organization_id)
+        .maybeSingle();
+
+      if (orgError || !org) {
+        setOrganization(null);
+        return null;
+      }
+
+      setOrganization(org as Organization);
+      return org as Organization;
+    } catch (err) {
+      console.error("[org] fetchOrganization error:", err);
+      setOrganization(null);
+      return null;
+    } finally {
+      setOrgLoading(false);
+    }
+  };
+
+  const refreshOrganization = async () => {
+    if (user) await fetchOrganization(user.id);
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -66,8 +118,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           // Fetch role immediately (not deferred)
           await fetchUserRole(session.user.id);
+          await fetchOrganization(session.user.id);
         } else {
           setRole(null);
+          setOrganization(null);
+          setOrgLoading(false);
         }
         setLoading(false);
       }
@@ -79,6 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         await fetchUserRole(session.user.id);
+        await fetchOrganization(session.user.id);
+      } else {
+        setOrgLoading(false);
       }
       setLoading(false);
     });
@@ -132,6 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(null);
       setUser(null);
       setSession(null);
+      setOrganization(null);
       await supabase.auth.signOut();
     } catch (err) {
       console.error("Error signing out:", err);
@@ -139,7 +198,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, role, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        role,
+        organization,
+        orgLoading,
+        refreshOrganization,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
