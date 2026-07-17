@@ -64,6 +64,12 @@ export default function Auth() {
   // Handle redirect when already logged in
   useEffect(() => {
     if (user && role) {
+      const pendingInvite = sessionStorage.getItem("civicshield.pendingInvite");
+      if (pendingInvite) {
+        sessionStorage.removeItem("civicshield.pendingInvite");
+        navigate(`/onboarding?token=${encodeURIComponent(pendingInvite)}`, { replace: true });
+        return;
+      }
       if (role === "alert_source") {
         navigate("/alert-source", { replace: true });
       } else {

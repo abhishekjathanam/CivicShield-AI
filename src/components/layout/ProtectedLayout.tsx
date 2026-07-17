@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppHeader } from "./AppHeader";
@@ -7,21 +7,26 @@ import { AppSidebar } from "./AppSidebar";
 import { CommandPalette } from "./CommandPalette";
 
 export function ProtectedLayout() {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, organization, orgLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (role === "alert_source") {
-        // Alert source users should go to their dedicated interface
-        navigate("/alert-source");
-      }
+    if (loading || orgLoading) return;
+    if (!user) {
+      navigate("/auth");
+      return;
     }
-  }, [user, role, loading, navigate]);
+    if (role === "alert_source") {
+      navigate("/alert-source");
+      return;
+    }
+    if (!organization && location.pathname !== "/onboarding") {
+      navigate("/onboarding", { replace: true });
+    }
+  }, [user, role, loading, orgLoading, organization, location.pathname, navigate]);
 
-  if (loading) {
+  if (loading || orgLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -45,6 +50,14 @@ export function ProtectedLayout() {
   }
 
   if (!user || role === "alert_source") {
+    return null;
+  }
+
+  // Signed-in user without an organization: render the onboarding outlet full-screen (no sidebar).
+  if (!organization) {
+    if (location.pathname === "/onboarding") {
+      return <Outlet />;
+    }
     return null;
   }
 

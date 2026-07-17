@@ -15,6 +15,9 @@ import Incidents from "./pages/Incidents";
 import Analytics from "./pages/Analytics";
 import AlertSourceDashboard from "./pages/AlertSourceDashboard";
 import Connectors from "./pages/Connectors";
+import Onboarding from "./pages/Onboarding";
+import OrganizationSettings from "./pages/OrganizationSettings";
+import InviteAccept from "./pages/InviteAccept";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,14 +32,17 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/invite/:token" element={<InviteAccept />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             {/* SOC Analyst routes */}
             <Route element={<ProtectedLayout />}>
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/incidents" element={<Incidents />} />
               <Route path="/connectors" element={<Connectors />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/settings/organization" element={<OrganizationSettings />} />
             </Route>
             {/* Alert Source routes */}
             <Route element={<AlertSourceLayout />}>
