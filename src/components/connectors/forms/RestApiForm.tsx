@@ -116,7 +116,7 @@ export function RestApiForm({ connector, onSuccess, onClose }: Props) {
           value={endpointUrl} 
           onChange={(e) => { setEndpointUrl(e.target.value); setValidated(false); }}
         />
-      </div>
+
       
       <div className="space-y-2">
         <Label htmlFor="apiKey">API Key or Bearer Token (For Polling)</Label>
