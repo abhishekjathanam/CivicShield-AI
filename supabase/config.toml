@@ -1,4 +1,4 @@
-project_id = "qmdqkekxuptqbkkbzsvl"
+project_id = "ptohzzgcexxwuxukjiuz"
 
 [functions.process-alerts]
 verify_jwt = false
