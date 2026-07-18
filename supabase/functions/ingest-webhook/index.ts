@@ -1,4 +1,3 @@
-import "xhr";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 // Initialize Supabase Admin client
