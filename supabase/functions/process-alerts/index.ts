@@ -1,5 +1,5 @@
 
-import { serve } from "std/server";
+
 import { createClient } from "@supabase/supabase-js";
 import { sanitizeAlertForPrompt } from "../_shared/sanitize.ts";
 
@@ -25,6 +25,7 @@ function getCorsHeaders(origin: string | null) {
 
 interface Alert {
   id: string;
+  organization_id: string;
   timestamp: string;
   source_system: string;
   alert_type: string;
@@ -36,6 +37,7 @@ interface Alert {
 }
 
 interface CorrelationGroup {
+  organization_id: string;
   alerts: Alert[];
   reason: string;
 }
@@ -104,11 +106,11 @@ async function generateIncidentSummary(
     const alertsContext = alerts.map(a => {
       const sanitized = sanitizeAlertForPrompt(a);
       return {
-        type: sanitized.title,
-        source: sanitized.source,
+        type: sanitized.alert_type,
+        source: sanitized.source_system,
         severity: sanitized.severity,
         timestamp: sanitized.timestamp,
-        raw_log: sanitized.raw_data,
+        raw_log: sanitized.raw_log,
         ai_analysis: a.ai_analysis ? String(a.ai_analysis).slice(0, 500) : null,
       };
     });
@@ -227,7 +229,7 @@ Review all ${alerts.length} correlated alerts in detail. Average risk score: ${a
 [Rule-based analysis - AI unavailable]`;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
   const corsHeaders = getCorsHeaders(origin);
 
@@ -286,11 +288,22 @@ serve(async (req) => {
     );
     
     if (bruteForceAlerts.length > 0) {
-      correlationGroups.push({
-        alerts: bruteForceAlerts,
-        reason: `Brute force attack detected with ${bruteForceAlerts[0].severity} severity from ${bruteForceAlerts.length} alert(s)`,
+      const bruteForceByOrg = new Map<string, Alert[]>();
+      bruteForceAlerts.forEach(a => {
+        if (!bruteForceByOrg.has(a.organization_id)) {
+          bruteForceByOrg.set(a.organization_id, []);
+        }
+        bruteForceByOrg.get(a.organization_id)!.push(a);
       });
-      bruteForceAlerts.forEach(a => processedAlertIds.add(a.id));
+      
+      bruteForceByOrg.forEach((orgAlerts, orgId) => {
+        correlationGroups.push({
+          organization_id: orgId,
+          alerts: orgAlerts,
+          reason: `Brute force attack detected with ${orgAlerts[0].severity} severity from ${orgAlerts.length} alert(s)`,
+        });
+        orgAlerts.forEach(a => processedAlertIds.add(a.id));
+      });
     }
 
     // Rule 2: 3+ alerts from same IP in 5 minutes → Incident
@@ -301,10 +314,11 @@ serve(async (req) => {
       const ip = alert.raw_log?.source_ip || alert.raw_log?.ip_address || 'unknown';
       if (ip === 'unknown') return;
       
-      if (!alertsByIP.has(ip)) {
-        alertsByIP.set(ip, []);
+      const key = `${alert.organization_id}::${ip}`;
+      if (!alertsByIP.has(key)) {
+        alertsByIP.set(key, []);
       }
-      alertsByIP.get(ip)!.push(alert);
+      alertsByIP.get(key)!.push(alert);
     });
 
     alertsByIP.forEach((ipAlerts, ip) => {
@@ -320,8 +334,9 @@ serve(async (req) => {
         
         if (diffMinutes <= 5) {
           correlationGroups.push({
+            organization_id: sortedAlerts[0].organization_id,
             alerts: sortedAlerts,
-            reason: `${sortedAlerts.length} alerts from IP ${ip} within ${diffMinutes.toFixed(1)} minutes`,
+            reason: `${sortedAlerts.length} alerts from IP ${ip.split('::')[1]} within ${diffMinutes.toFixed(1)} minutes`,
           });
           sortedAlerts.forEach(a => processedAlertIds.add(a.id));
         }
@@ -341,18 +356,20 @@ serve(async (req) => {
                             alert.alert_type.toLowerCase().includes('authentication');
       
       if (isFailedLogin) {
-        if (!alertsByUser.has(user)) {
-          alertsByUser.set(user, []);
+        const key = `${alert.organization_id}::${user}`;
+        if (!alertsByUser.has(key)) {
+          alertsByUser.set(key, []);
         }
-        alertsByUser.get(user)!.push(alert);
+        alertsByUser.get(key)!.push(alert);
       }
     });
 
     alertsByUser.forEach((userAlerts, user) => {
       if (userAlerts.length >= 2) {
         correlationGroups.push({
+          organization_id: userAlerts[0].organization_id,
           alerts: userAlerts,
-          reason: `Multiple failed login attempts (${userAlerts.length}) for user "${user}"`,
+          reason: `Multiple failed login attempts (${userAlerts.length}) for user "${user.split('::')[1]}"`,
         });
         userAlerts.forEach(a => processedAlertIds.add(a.id));
       }
@@ -379,6 +396,7 @@ serve(async (req) => {
       const { data: incident, error: incidentError } = await supabase
         .from('incidents')
         .insert({
+          organization_id: group.organization_id,
           severity: incidentSeverity,
           status: 'Open',
           incident_reason: group.reason,

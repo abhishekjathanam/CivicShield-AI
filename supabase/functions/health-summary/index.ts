@@ -1,4 +1,4 @@
-import { serve } from "std/server";
+
 import { createClient } from "@supabase/supabase-js";
 
 // Allowed origins for CORS - restrict to known application domains
@@ -22,7 +22,7 @@ function getCorsHeaders(origin: string | null) {
 }
 
 // Verify authorization - allows service role key (for cron jobs) or admin JWT (for UI)
-async function verifyAuth(req: Request): Promise<{ authorized: boolean; error?: string }> {
+async function verifyAuth(req: Request): Promise<{ authorized: boolean; error?: string; organization_id?: string }> {
   const authHeader = req.headers.get('Authorization');
 
   if (!authHeader) {
@@ -35,7 +35,7 @@ async function verifyAuth(req: Request): Promise<{ authorized: boolean; error?: 
   // Allow service role key for cron jobs
   if (serviceRoleKey && token === serviceRoleKey) {
     console.log('Authorized via service role key (cron job)');
-    return { authorized: true };
+    return { authorized: true }; // No org ID, implies global health summary
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -53,22 +53,22 @@ async function verifyAuth(req: Request): Promise<{ authorized: boolean; error?: 
     return { authorized: false, error: 'Invalid or expired token' };
   }
 
-  // Check if user has admin role
-  const { data: roleData, error: roleError } = await supabaseClient
-    .from('user_roles')
-    .select('role')
+  // Check if user has admin role and get org ID
+  const { data: memberData, error: memberError } = await supabaseClient
+    .from('organization_members')
+    .select('role, organization_id')
     .eq('user_id', user.id)
     .single();
 
-  if (roleError || roleData?.role !== 'admin') {
+  if (memberError || (memberData?.role !== 'admin' && memberData?.role !== 'org_admin')) {
     return { authorized: false, error: 'Admin access required' };
   }
 
-  console.log('Authorized via admin JWT');
-  return { authorized: true };
+  console.log('Authorized via admin JWT for org:', memberData.organization_id);
+  return { authorized: true, organization_id: memberData.organization_id };
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
   const corsHeaders = getCorsHeaders(origin);
 
@@ -98,6 +98,13 @@ serve(async (req) => {
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
 
+    const withOrg = (query: any) => {
+      if (authResult.organization_id) {
+        return query.eq('organization_id', authResult.organization_id);
+      }
+      return query;
+    };
+
     // Gather statistics for the last 24 hours
     const [
       totalAlertsResult,
@@ -109,32 +116,32 @@ serve(async (req) => {
       aiAnalyzedResult,
     ] = await Promise.all([
       // Total alerts
-      supabase.from('alerts').select('id', { count: 'exact', head: true }),
+      withOrg(supabase.from('alerts').select('id', { count: 'exact', head: true })),
       // New alerts in last 24 hours
-      supabase.from('alerts').select('id', { count: 'exact', head: true }).gte('created_at', yesterday.toISOString()),
+      withOrg(supabase.from('alerts').select('id', { count: 'exact', head: true }).gte('created_at', yesterday.toISOString())),
       // Critical alerts in last 24 hours
-      supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('severity', 'Critical').gte('created_at', yesterday.toISOString()),
+      withOrg(supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('severity', 'Critical').gte('created_at', yesterday.toISOString())),
       // Correlated alerts in last 24 hours
-      supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('status', 'Correlated').gte('updated_at', yesterday.toISOString()),
+      withOrg(supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('status', 'Correlated').gte('updated_at', yesterday.toISOString())),
       // Open incidents
-      supabase.from('incidents').select('id', { count: 'exact', head: true }).in('status', ['Open', 'In Progress']),
+      withOrg(supabase.from('incidents').select('id', { count: 'exact', head: true }).in('status', ['Open', 'In Progress'])),
       // Resolved incidents in last 24 hours
-      supabase.from('incidents').select('id', { count: 'exact', head: true }).eq('status', 'Resolved').gte('updated_at', yesterday.toISOString()),
+      withOrg(supabase.from('incidents').select('id', { count: 'exact', head: true }).eq('status', 'Resolved').gte('updated_at', yesterday.toISOString())),
       // AI analyzed alerts
-      supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('ai_used', true),
+      withOrg(supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('ai_used', true)),
     ]);
 
     // Get severity distribution
-    const { data: severityData } = await supabase.from('alerts').select('severity');
+    const { data: severityData } = await withOrg(supabase.from('alerts').select('severity'));
     const severityCounts: Record<string, number> = { Critical: 0, High: 0, Medium: 0, Low: 0 };
-    severityData?.forEach(a => {
+    severityData?.forEach((a: any) => {
       severityCounts[a.severity] = (severityCounts[a.severity] || 0) + 1;
     });
 
     // Get top source systems
-    const { data: sourceData } = await supabase.from('alerts').select('source_system').gte('created_at', yesterday.toISOString());
+    const { data: sourceData } = await withOrg(supabase.from('alerts').select('source_system').gte('created_at', yesterday.toISOString()));
     const sourceCounts: Record<string, number> = {};
-    sourceData?.forEach(a => {
+    sourceData?.forEach((a: any) => {
       sourceCounts[a.source_system] = (sourceCounts[a.source_system] || 0) + 1;
     });
     const topSources = Object.entries(sourceCounts)

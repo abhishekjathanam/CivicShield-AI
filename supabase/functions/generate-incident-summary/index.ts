@@ -1,4 +1,4 @@
-import { serve } from "std/server";
+
 import { createClient } from "@supabase/supabase-js";
 import { sanitizeAlertForPrompt } from "../_shared/sanitize.ts";
 
@@ -35,11 +35,11 @@ async function generateIncidentSummary(
     const alertsContext = alerts.map(a => {
       const sanitized = sanitizeAlertForPrompt(a);
       return {
-        type: sanitized.title,
-        source: sanitized.source,
+        type: sanitized.alert_type,
+        source: sanitized.source_system,
         severity: sanitized.severity,
         timestamp: sanitized.timestamp,
-        raw_log: sanitized.raw_data,
+        raw_log: sanitized.raw_log,
         ai_analysis: a.ai_analysis ? String(a.ai_analysis).slice(0, 500) : null,
       };
     });
@@ -168,7 +168,7 @@ function generateFallbackSummary(alerts: Alert[], reason: string, severity: stri
   return `\`\`\`json\n${JSON.stringify(fallbackJSON, null, 2)}\n\`\`\``;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

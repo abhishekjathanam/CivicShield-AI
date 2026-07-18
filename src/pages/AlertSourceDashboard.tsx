@@ -13,24 +13,24 @@ import { supabase } from "@/integrations/supabase/client";
 type AlertSeverity = "Low" | "Medium" | "High" | "Critical";
 
 interface AlertFormData {
-  source: string;
-  title: string;
+  source_system: string;
+  alert_type: string;
   severity: AlertSeverity;
-  raw_data: string;
+  raw_log: string;
 }
 
 const initialFormData: AlertFormData = {
-  source: "",
-  title: "",
+  source_system: "",
+  alert_type: "",
   severity: "Medium",
-  raw_data: "",
+  raw_log: "",
 };
 
 // Sample alert templates for demo generation
 const SAMPLE_ALERT_TYPES = [
   {
-    title: "Brute Force Login Attempt",
-    source: "Authentication System",
+    alert_type: "Brute Force Login Attempt",
+    source_system: "Authentication System",
     generateLog: () => ({
       source_ip: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
       affected_user: `user${Math.floor(Math.random() * 1000)}@company.com`,
@@ -39,8 +39,8 @@ const SAMPLE_ALERT_TYPES = [
     }),
   },
   {
-    title: "Phishing Email Detected",
-    source: "Email Gateway",
+    alert_type: "Phishing Email Detected",
+    source_system: "Email Gateway",
     generateLog: () => ({
       source_ip: `10.0.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
       affected_user: `employee${Math.floor(Math.random() * 500)}@company.com`,
@@ -50,8 +50,8 @@ const SAMPLE_ALERT_TYPES = [
     }),
   },
   {
-    title: "Malware Detection",
-    source: "EDR",
+    alert_type: "Malware Detection",
+    source_system: "EDR",
     generateLog: () => ({
       source_ip: `172.16.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
       affected_system: `WORKSTATION-${Math.floor(Math.random() * 999).toString().padStart(3, '0')}`,
@@ -61,8 +61,8 @@ const SAMPLE_ALERT_TYPES = [
     }),
   },
   {
-    title: "Suspicious Login",
-    source: "Cloud IAM",
+    alert_type: "Suspicious Login",
+    source_system: "Cloud IAM",
     generateLog: () => ({
       source_ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
       affected_user: `admin${Math.floor(Math.random() * 50)}@company.com`,
@@ -72,8 +72,8 @@ const SAMPLE_ALERT_TYPES = [
     }),
   },
   {
-    title: "Port Scanning Activity",
-    source: "Firewall",
+    alert_type: "Port Scanning Activity",
+    source_system: "Firewall",
     generateLog: () => ({
       source_ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
       affected_system: `SERVER-${["WEB", "DB", "APP", "FILE"][Math.floor(Math.random() * 4)]}-${Math.floor(Math.random() * 10)}`,
@@ -116,10 +116,10 @@ export default function AlertSourceDashboard() {
         
         alertsToInsert.push({
           organization_id: organization.id,
-          source: template.source,
-          title: template.title,
+          source_system: template.source_system,
+          alert_type: template.alert_type,
           severity,
-          raw_data: template.generateLog(),
+          raw_log: template.generateLog(),
           status: "New" as const,
           timestamp: new Date().toISOString(),
         });
@@ -157,11 +157,11 @@ export default function AlertSourceDashboard() {
       return;
     }
 
-    if (!formData.source.trim() || !formData.title.trim()) {
+    if (!formData.source_system.trim() || !formData.alert_type.trim()) {
       toast({
         variant: "destructive",
         title: "Validation Error",
-        description: "Source and Title are required.",
+        description: "Source and Type are required.",
       });
       return;
     }
@@ -171,12 +171,12 @@ export default function AlertSourceDashboard() {
     try {
       // Parse raw_data as JSON if provided
       let parsedRawLog = null;
-      if (formData.raw_data.trim()) {
+      if (formData.raw_log.trim()) {
         try {
-          parsedRawLog = JSON.parse(formData.raw_data);
+          parsedRawLog = JSON.parse(formData.raw_log);
         } catch {
           // If not valid JSON, store as message object
-          parsedRawLog = { message: formData.raw_data };
+          parsedRawLog = { message: formData.raw_log };
         }
       }
 
@@ -184,10 +184,10 @@ export default function AlertSourceDashboard() {
         .from("alerts")
         .insert({
           organization_id: organization.id,
-          source: formData.source.trim(),
-          title: formData.title.trim(),
+          source_system: formData.source_system.trim(),
+          alert_type: formData.alert_type.trim(),
           severity: formData.severity,
-          raw_data: parsedRawLog,
+          raw_log: parsedRawLog,
           status: "New",
           timestamp: new Date().toISOString(),
         })
@@ -260,9 +260,9 @@ export default function AlertSourceDashboard() {
                   <Label htmlFor="source">Source System *</Label>
                   <Input 
                     id="source" 
-                    placeholder="e.g. AWS CloudTrail, CrowdStrike, Okta" 
-                    value={formData.source}
-                    onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                    placeholder="e.g. AWS CloudTrail, CrowdStrike Falcon" 
+                    value={formData.source_system}
+                    onChange={(e) => setFormData({ ...formData, source_system: e.target.value })}
                     required
                     className="bg-[#1e2330] border-[#2a2f3a]"
                   />
@@ -272,9 +272,9 @@ export default function AlertSourceDashboard() {
                   <Label htmlFor="title">Alert Title *</Label>
                   <Input 
                     id="title" 
-                    placeholder="e.g. Excessive Failed Logins" 
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g. Excessive Failed Logins, Malware Dropper Detected" 
+                    value={formData.alert_type}
+                    onChange={(e) => setFormData({ ...formData, alert_type: e.target.value })}
                     required
                     className="bg-[#1e2330] border-[#2a2f3a]"
                   />
@@ -305,9 +305,9 @@ export default function AlertSourceDashboard() {
                 <Label htmlFor="raw_data">Raw Log Data (Optional)</Label>
                 <Textarea 
                   id="raw_data" 
-                  placeholder='{"event_id": 1234, "user": "admin", "action": "delete"}' 
-                  value={formData.raw_data}
-                  onChange={(e) => setFormData({ ...formData, raw_data: e.target.value })}
+                  placeholder="{&#10;  &quot;event_id&quot;: &quot;...&quot;,&#10;  &quot;ip_address&quot;: &quot;...&quot;&#10;}" 
+                  value={formData.raw_log}
+                  onChange={(e) => setFormData({ ...formData, raw_log: e.target.value })}
                   className="bg-[#1e2330] border-[#2a2f3a] font-mono text-sm h-32"
                 />
                 <p className="text-xs text-muted-foreground">

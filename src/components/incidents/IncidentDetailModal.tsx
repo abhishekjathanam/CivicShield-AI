@@ -222,12 +222,12 @@ export function IncidentDetailModal({ incident, open, onOpenChange }: IncidentDe
                                 <TableBody>
                                   {correlatedAlerts.map((alert) => (
                                     <TableRow key={alert.id}>
-                                      <TableCell className="font-medium">{alert.title}</TableCell>
+                                      <TableCell className="font-medium">{alert.alert_type}</TableCell>
                                       <TableCell className="text-muted-foreground">
-                                        {alert.source}
+                                        {alert.source_system}
                                       </TableCell>
                                       <TableCell className="font-mono text-xs">
-                                        {extractIP(alert.raw_data)}
+                                        {extractIP(alert.raw_log)}
                                       </TableCell>
                                       <TableCell>
                                         <Badge className={SEVERITY_COLORS[alert.severity]} variant="secondary">

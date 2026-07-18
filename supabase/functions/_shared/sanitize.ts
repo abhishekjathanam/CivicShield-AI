@@ -74,30 +74,30 @@ export function containsSuspiciousPatterns(text: string): boolean {
  * Sanitize alert data specifically for SOC analysis prompts
  */
 export function sanitizeAlertForPrompt(alert: {
-  title?: string;
+  alert_type?: string;
   severity?: string;
-  source?: string;
+  source_system?: string;
   timestamp?: string;
-  raw_data?: unknown;
+  raw_log?: unknown;
 }): {
-  title: string;
+  alert_type: string;
   severity: string;
-  source: string;
+  source_system: string;
   timestamp: string;
-  raw_data: unknown;
+  raw_log: unknown;
   contains_suspicious_content: boolean;
 } {
-  const rawLogStr = JSON.stringify(alert.raw_data || {});
+  const rawLogStr = JSON.stringify(alert.raw_log || {});
   const isSuspicious = containsSuspiciousPatterns(rawLogStr) ||
-    containsSuspiciousPatterns(alert.title || '') ||
-    containsSuspiciousPatterns(alert.source || '');
+    containsSuspiciousPatterns(alert.alert_type || '') ||
+    containsSuspiciousPatterns(alert.source_system || '');
 
   return {
-    title: sanitizeForPrompt(alert.title || '', 200),
+    alert_type: sanitizeForPrompt(alert.alert_type || '', 200),
     severity: alert.severity || 'Medium', // Enum, safe
-    source: sanitizeForPrompt(alert.source || '', 200),
+    source_system: sanitizeForPrompt(alert.source_system || '', 200),
     timestamp: alert.timestamp || new Date().toISOString(),
-    raw_data: sanitizeObject(alert.raw_data, 300),
+    raw_log: sanitizeObject(alert.raw_log, 300),
     contains_suspicious_content: isSuspicious,
   };
 }

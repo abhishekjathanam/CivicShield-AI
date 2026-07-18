@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAlerts, Alert } from "@/hooks/useAlerts";
+import { useRealtimeAlerts } from "@/hooks/useRealtimeAlerts";
 import { AlertDetailModal } from "@/components/alerts/AlertDetailModal";
 import { formatDistanceToNow } from "date-fns";
 
@@ -24,6 +25,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function Alerts() {
+  useRealtimeAlerts();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: alerts, isLoading } = useAlerts();
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
@@ -47,8 +49,8 @@ export default function Alerts() {
 
   const filteredAlerts = alerts?.filter((alert) => {
     const matchesSearch =
-      alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alert.source.toLowerCase().includes(searchTerm.toLowerCase());
+      alert.alert_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      alert.source_system.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSeverity = severityFilter === "all" || alert.severity === severityFilter;
     const matchesStatus = statusFilter === "all" || alert.status === statusFilter;
     return matchesSearch && matchesSeverity && matchesStatus;
@@ -144,14 +146,14 @@ export default function Alerts() {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleAlertClick(alert)}
                     >
-                      <TableCell className="font-medium">{alert.title}</TableCell>
+                      <TableCell className="font-medium">{alert.alert_type}</TableCell>
                       <TableCell>
                         <Badge className={SEVERITY_COLORS[alert.severity]}>
                           {alert.severity}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {alert.source}
+                        {alert.source_system}
                       </TableCell>
                       <TableCell>
                         {alert.risk_score !== null ? (

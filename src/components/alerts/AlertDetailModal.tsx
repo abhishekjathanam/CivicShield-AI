@@ -78,11 +78,11 @@ export function AlertDetailModal({ alert, open, onOpenChange }: AlertDetailModal
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Type:</span>
-                <span className="font-medium">{alert.title}</span>
+                <span className="font-medium">{alert.alert_type}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Source:</span>
-                <span className="font-medium">{alert.source}</span>
+                <span className="font-medium">{alert.source_system}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Status:</span>
@@ -151,14 +151,14 @@ export function AlertDetailModal({ alert, open, onOpenChange }: AlertDetailModal
           )}
 
           {/* Raw Log */}
-          {alert.raw_data && (
+          {alert.raw_log && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">Raw Log Data</CardTitle>
               </CardHeader>
               <CardContent>
                 <pre className="text-xs bg-muted p-3 rounded-lg overflow-x-auto">
-                  {JSON.stringify(alert.raw_data, null, 2)}
+                  {JSON.stringify(alert.raw_log, null, 2)}
                 </pre>
               </CardContent>
             </Card>

@@ -1,4 +1,4 @@
-import { serve } from "std/server";
+
 import { createClient } from "@supabase/supabase-js";
 import { sanitizeAlertForPrompt } from "../_shared/sanitize.ts";
 
@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -92,11 +92,11 @@ serve(async (req) => {
         alertsContext = JSON.stringify(alertData.map(a => {
           const sanitized = sanitizeAlertForPrompt(a);
           return {
-            type: sanitized.title,
-            source: sanitized.source,
+            type: sanitized.alert_type,
+            source: sanitized.source_system,
             severity: sanitized.severity,
             timestamp: sanitized.timestamp,
-            raw_log: sanitized.raw_data,
+            raw_log: sanitized.raw_log,
           };
         }), null, 2);
       }

@@ -54,13 +54,13 @@ export type Database = {
         Row: {
           id: string
           organization_id: string
-          title: string
+          alert_type: string
           description: string | null
           severity: Database["public"]["Enums"]["alert_severity"]
           status: Database["public"]["Enums"]["alert_status"]
-          source: string
+          source_system: string
           timestamp: string
-          raw_data: Json | null
+          raw_log: Json | null
           ai_used?: boolean
           risk_score?: number | null
           created_at: string
@@ -69,13 +69,13 @@ export type Database = {
         Insert: {
           id?: string
           organization_id: string
-          title: string
+          alert_type: string
           description?: string | null
           severity: Database["public"]["Enums"]["alert_severity"]
           status?: Database["public"]["Enums"]["alert_status"]
-          source: string
+          source_system: string
           timestamp: string
-          raw_data?: Json | null
+          raw_log?: Json | null
           ai_used?: boolean
           risk_score?: number | null
           created_at?: string
@@ -84,13 +84,13 @@ export type Database = {
         Update: {
           id?: string
           organization_id?: string
-          title?: string
+          alert_type?: string
           description?: string | null
           severity?: Database["public"]["Enums"]["alert_severity"]
           status?: Database["public"]["Enums"]["alert_status"]
-          source?: string
+          source_system?: string
           timestamp?: string
-          raw_data?: Json | null
+          raw_log?: Json | null
           ai_used?: boolean
           risk_score?: number | null
           created_at?: string
