@@ -12,12 +12,18 @@ BEGIN
 END $$;
 
 -- Add tables to realtime (using safe idempotent syntax)
-ALTER PUBLICATION supabase_realtime ADD TABLE public.alerts;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.incidents;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'alerts') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.alerts;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'incidents') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.incidents;
+    END IF;
+END $$;
 
 -- 3. Schedule the process-alerts Edge Function
--- First, safely remove the cron job if it already exists
-SELECT cron.unschedule('process_alerts_every_minute');
+-- The job will be updated automatically if it exists due to using a named schedule
 
 -- Then schedule it to run every minute
 -- Note: We use pg_net to invoke the edge function.
