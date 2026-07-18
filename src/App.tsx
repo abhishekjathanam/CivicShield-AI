@@ -18,6 +18,7 @@ import Connectors from "./pages/Connectors";
 import Onboarding from "./pages/Onboarding";
 import OrganizationSettings from "./pages/OrganizationSettings";
 import InviteAccept from "./pages/InviteAccept";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/incidents" element={<Incidents />} />
               <Route path="/connectors" element={<Connectors />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/reports" element={<Reports />} />
               <Route path="/settings/organization" element={<OrganizationSettings />} />
             </Route>
             {/* Alert Source routes */}

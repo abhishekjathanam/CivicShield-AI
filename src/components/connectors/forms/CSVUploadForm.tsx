@@ -5,6 +5,7 @@ import { ConnectorConfig } from "@/pages/Connectors";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, UploadCloud, File, X, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   connector: ConnectorConfig;
@@ -13,11 +14,13 @@ interface Props {
 }
 
 export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
+  const { organization } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [isValidating, setIsValidating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [validated, setValidated] = useState(false);
+  const [csvContent, setCsvContent] = useState<string>("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,6 +48,7 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
     reader.onload = (e) => {
       try {
         const text = e.target?.result as string;
+        setCsvContent(text);
         const firstLine = text.split('\n')[0];
         const parsedHeaders = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, ''));
         
@@ -70,27 +74,56 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
   };
 
   const handleSave = async () => {
-    if (!validated || !file) return;
+    if (!validated || !file || !organization) return;
 
     setIsSaving(true);
     try {
-      const config = { fileName: file.name, headers };
+      // 1. Parse rows and upload alerts
+      const rows = csvContent.split('\n').filter(r => r.trim());
+      const headerRow = headers.map(h => h.toLowerCase());
       
+      const alertsToInsert = [];
+      // Skip header row
+      for (let i = 1; i < rows.length; i++) {
+        // Basic naive CSV split (doesn't handle commas in quotes)
+        const cols = rows[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+        
+        const alert_type = cols[headerRow.indexOf('alert_type')] || cols[headerRow.indexOf('type')] || 'CSV Import Alert';
+        const severity = cols[headerRow.indexOf('severity')] || 'Medium';
+        const source = cols[headerRow.indexOf('source_system')] || cols[headerRow.indexOf('source')] || 'CSV Upload';
+        
+        alertsToInsert.push({
+          organization_id: organization.id,
+          alert_type,
+          severity,
+          source_system: source,
+          raw_log: { original_row: rows[i], imported_from: file.name }
+        });
+      }
+      
+      if (alertsToInsert.length > 0) {
+        const { error: insertError } = await supabase.from('alerts').insert(alertsToInsert);
+        if (insertError) throw insertError;
+      }
+
+      // 2. Save Connector Config
+      const config = { fileName: file.name, headers, rowsImported: alertsToInsert.length };
       const { error } = await supabase.from('data_connectors').insert({
+        organization_id: organization.id,
         name: `CSV Upload (${file.name})`,
         type: connector.type,
         status: 'active',
         config: config as any,
-        records_imported: 0 // In a real app we'd parse and upload records here
+        records_imported: alertsToInsert.length
       });
 
       if (error) throw error;
       
-      toast.success("CSV Mapped and Upload Configuration Saved");
+      toast.success(`Successfully imported ${alertsToInsert.length} alerts!`);
       onSuccess();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to configure CSV upload");
+      toast.error("Failed to import CSV data");
     } finally {
       setIsSaving(false);
     }

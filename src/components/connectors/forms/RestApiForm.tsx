@@ -91,8 +91,25 @@ export function RestApiForm({ connector, onSuccess, onClose }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="endpointUrl">Endpoint URL</Label>
+        <div className="bg-muted p-4 rounded-md space-y-2 mb-4">
+          <h4 className="text-sm font-semibold">Your Ingestion Webhook URL</h4>
+          <p className="text-xs text-muted-foreground mb-2">Configure your external system to POST JSON alerts to this endpoint.</p>
+          <div className="flex gap-2">
+            <Input 
+              readOnly 
+              value={`https://qmdqkekxuptqbkkbzsvl.supabase.co/functions/v1/ingest-webhook`} 
+              className="font-mono text-xs bg-background" 
+            />
+            <Button variant="outline" size="icon" onClick={() => {
+              navigator.clipboard.writeText(`https://qmdqkekxuptqbkkbzsvl.supabase.co/functions/v1/ingest-webhook`);
+              toast.success("Copied to clipboard!");
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            </Button>
+          </div>
+        </div>
+
+        <Label htmlFor="endpointUrl">Test Endpoint Connection (Optional Polling)</Label>
         <Input 
           id="endpointUrl" 
           placeholder="https://api.provider.com/v1/alerts" 
@@ -102,38 +119,28 @@ export function RestApiForm({ connector, onSuccess, onClose }: Props) {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="apiKey">API Key (Optional)</Label>
+        <Label htmlFor="apiKey">API Key or Bearer Token (For Polling)</Label>
         <Input 
           id="apiKey" 
           type="password"
-          placeholder="Enter API Key for polling..." 
+          placeholder="Leave blank if using Webhook only" 
           value={apiKey} 
           onChange={(e) => { setApiKey(e.target.value); setValidated(false); }}
         />
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="webhookSecret">Webhook Secret (Optional)</Label>
-        <Input 
-          id="webhookSecret" 
-          type="password"
-          placeholder="Enter secret for validating incoming webhooks..." 
-          value={webhookSecret} 
-          onChange={(e) => { setWebhookSecret(e.target.value); setValidated(false); }}
-        />
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="headers">Custom Headers (JSON)</Label>
         <Textarea 
           id="headers" 
-          className="font-mono text-xs min-h-[80px]"
+          className="font-mono text-sm" 
+          rows={3}
           value={headers} 
           onChange={(e) => { setHeaders(e.target.value); setValidated(false); }}
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
+      <div className="flex justify-end gap-3 pt-4 border-t mt-6">
         <Button variant="outline" onClick={onClose}>Cancel</Button>
         {!validated ? (
           <Button onClick={handleValidate} disabled={isValidating}>
@@ -143,7 +150,7 @@ export function RestApiForm({ connector, onSuccess, onClose }: Props) {
         ) : (
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Save Securely & Enable
+            Activate Webhook & Poller
           </Button>
         )}
       </div>

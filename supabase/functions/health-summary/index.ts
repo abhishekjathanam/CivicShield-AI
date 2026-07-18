@@ -1,5 +1,5 @@
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 // Allowed origins for CORS - restrict to known application domains
 const allowedOrigins = [

@@ -5,6 +5,7 @@ import {
   BarChart3,
   Plug,
   Building2,
+  FileText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -24,6 +25,7 @@ const mainNavItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Alerts", url: "/alerts", icon: AlertTriangle },
   { title: "Incidents", url: "/incidents", icon: FileWarning },
+  { title: "Reports", url: "/reports", icon: FileText },
   { title: "Connectors", url: "/connectors", icon: Plug },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];

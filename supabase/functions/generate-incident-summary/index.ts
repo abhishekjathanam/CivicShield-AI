@@ -1,5 +1,5 @@
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { sanitizeAlertForPrompt } from "../_shared/sanitize.ts";
 
 const corsHeaders = {
