@@ -52,48 +52,59 @@ export type Database = {
       }
       alerts: {
         Row: {
-          description: string | null
-          ai_used?: boolean
-          title: string
-          created_at: string
           id: string
-          raw_data: Json | null
-          risk_score?: number | null
+          organization_id: string
+          title: string
+          description: string | null
           severity: Database["public"]["Enums"]["alert_severity"]
-          source: string
           status: Database["public"]["Enums"]["alert_status"]
+          source: string
           timestamp: string
+          raw_data: Json | null
+          ai_used?: boolean
+          risk_score?: number | null
+          created_at: string
           updated_at: string
         }
         Insert: {
-          ai_analysis?: string | null
-          ai_used?: boolean
-          title: string
-          created_at?: string
           id?: string
-          raw_log?: Json | null
-          risk_score?: number | null
-          severity?: Database["public"]["Enums"]["alert_severity"]
-          source: string
+          organization_id: string
+          title: string
+          description?: string | null
+          severity: Database["public"]["Enums"]["alert_severity"]
           status?: Database["public"]["Enums"]["alert_status"]
-          timestamp?: string
+          source: string
+          timestamp: string
+          raw_data?: Json | null
+          ai_used?: boolean
+          risk_score?: number | null
+          created_at?: string
           updated_at?: string
         }
         Update: {
-          ai_analysis?: string | null
-          ai_used?: boolean
-          alert_type?: string
-          created_at?: string
           id?: string
-          raw_log?: Json | null
-          risk_score?: number | null
+          organization_id?: string
+          title?: string
+          description?: string | null
           severity?: Database["public"]["Enums"]["alert_severity"]
-          source_system?: string
           status?: Database["public"]["Enums"]["alert_status"]
+          source?: string
           timestamp?: string
+          raw_data?: Json | null
+          ai_used?: boolean
+          risk_score?: number | null
+          created_at?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "alerts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       data_connectors: {
         Row: {

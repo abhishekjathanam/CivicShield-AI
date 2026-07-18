@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "std/server";
+import { createClient } from "@supabase/supabase-js";
 
 // Allowed origins for CORS - restrict to known application domains
 const allowedOrigins = [
@@ -10,10 +10,10 @@ const allowedOrigins = [
 ];
 
 function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && allowedOrigins.includes(origin) 
-    ? origin 
+  const allowedOrigin = origin && allowedOrigins.includes(origin)
+    ? origin
     : allowedOrigins[0];
-    
+
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -24,14 +24,14 @@ function getCorsHeaders(origin: string | null) {
 // Verify authorization - allows service role key (for cron jobs) or admin JWT (for UI)
 async function verifyAuth(req: Request): Promise<{ authorized: boolean; error?: string }> {
   const authHeader = req.headers.get('Authorization');
-  
+
   if (!authHeader) {
     return { authorized: false, error: 'Missing authorization header' };
   }
 
   const token = authHeader.replace('Bearer ', '');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  
+
   // Allow service role key for cron jobs
   if (serviceRoleKey && token === serviceRoleKey) {
     console.log('Authorized via service role key (cron job)');
@@ -40,7 +40,7 @@ async function verifyAuth(req: Request): Promise<{ authorized: boolean; error?: 
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-  
+
   // Create client with user's JWT
   const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: authHeader } }
@@ -48,7 +48,7 @@ async function verifyAuth(req: Request): Promise<{ authorized: boolean; error?: 
 
   // Verify the user
   const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-  
+
   if (authError || !user) {
     return { authorized: false, error: 'Invalid or expired token' };
   }
@@ -89,7 +89,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     console.log('Generating daily system health summary...');

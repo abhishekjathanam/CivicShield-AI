@@ -47,8 +47,8 @@ export default function Alerts() {
 
   const filteredAlerts = alerts?.filter((alert) => {
     const matchesSearch =
-      alert.alert_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alert.source_system.toLowerCase().includes(searchTerm.toLowerCase());
+      alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      alert.source.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSeverity = severityFilter === "all" || alert.severity === severityFilter;
     const matchesStatus = statusFilter === "all" || alert.status === statusFilter;
     return matchesSearch && matchesSeverity && matchesStatus;
@@ -144,14 +144,14 @@ export default function Alerts() {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleAlertClick(alert)}
                     >
-                      <TableCell className="font-medium">{alert.alert_type}</TableCell>
+                      <TableCell className="font-medium">{alert.title}</TableCell>
                       <TableCell>
                         <Badge className={SEVERITY_COLORS[alert.severity]}>
                           {alert.severity}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {alert.source_system}
+                        {alert.source}
                       </TableCell>
                       <TableCell>
                         {alert.risk_score !== null ? (

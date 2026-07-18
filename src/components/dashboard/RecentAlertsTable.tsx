@@ -58,14 +58,14 @@ export function RecentAlertsTable() {
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => navigate(`/alerts?id=${alert.id}`)}
                 >
-                  <TableCell className="font-medium">{alert.alert_type}</TableCell>
+                  <TableCell className="font-medium">{alert.title}</TableCell>
                   <TableCell>
                     <Badge className={SEVERITY_COLORS[alert.severity]}>
                       {alert.severity}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {alert.source_system}
+                  <TableCell className="text-muted-foreground hidden md:table-cell">
+                    {alert.source}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {formatDistanceToNow(new Date(alert.timestamp), { addSuffix: true })}

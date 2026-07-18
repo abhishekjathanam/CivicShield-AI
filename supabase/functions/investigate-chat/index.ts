@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "std/server";
+import { createClient } from "@supabase/supabase-js";
 import { sanitizeAlertForPrompt } from "../_shared/sanitize.ts";
 
 const corsHeaders = {
@@ -92,11 +92,11 @@ serve(async (req) => {
         alertsContext = JSON.stringify(alertData.map(a => {
           const sanitized = sanitizeAlertForPrompt(a);
           return {
-            type: sanitized.alert_type,
-            source: sanitized.source_system,
+            type: sanitized.title,
+            source: sanitized.source,
             severity: sanitized.severity,
             timestamp: sanitized.timestamp,
-            raw_log: sanitized.raw_log,
+            raw_log: sanitized.raw_data,
           };
         }), null, 2);
       }

@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "std/server";
+import { createClient } from "@supabase/supabase-js";
 import { sanitizeAlertForPrompt } from "../_shared/sanitize.ts";
 
 const corsHeaders = {
@@ -24,7 +24,7 @@ async function generateIncidentSummary(
   severity: string
 ): Promise<{ summary: string; ai_used: boolean }> {
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-  
+
   if (!openAIApiKey) {
     console.log('OpenAI API key not found, using fallback summary');
     return { summary: generateFallbackSummary(alerts, reason, severity), ai_used: false };
@@ -35,11 +35,11 @@ async function generateIncidentSummary(
     const alertsContext = alerts.map(a => {
       const sanitized = sanitizeAlertForPrompt(a);
       return {
-        type: sanitized.alert_type,
-        source: sanitized.source_system,
+        type: sanitized.title,
+        source: sanitized.source,
         severity: sanitized.severity,
         timestamp: sanitized.timestamp,
-        raw_log: sanitized.raw_log,
+        raw_log: sanitized.raw_data,
         ai_analysis: a.ai_analysis ? String(a.ai_analysis).slice(0, 500) : null,
       };
     });
@@ -134,14 +134,14 @@ function generateFallbackSummary(alerts: Alert[], reason: string, severity: stri
   const alertTypes = [...new Set(alerts.map(a => a.alert_type))].join(', ');
   const sources = [...new Set(alerts.map(a => a.source_system))].join(', ');
   const riskScores = alerts.filter(a => a.risk_score !== null && a.risk_score !== undefined).map(a => a.risk_score as number);
-  const avgRisk = riskScores.length > 0 
+  const avgRisk = riskScores.length > 0
     ? Math.round(riskScores.reduce((a, b) => a + b, 0) / riskScores.length)
     : 50;
 
   const fallbackJSON = {
     executiveSummary: `Fallback analysis: Incident involves ${alerts.length} correlated alert(s) of type: ${alertTypes || 'Unknown'}.`,
     technicalSummary: `Attack originated from: ${sources || 'Unknown source'}. Reason: ${reason || 'Unknown attack pattern'}.`,
-    businessImpact: severity === 'Critical' || severity === 'High' 
+    businessImpact: severity === 'Critical' || severity === 'High'
       ? 'Potential significant impact on business operations. Immediate investigation required to prevent data breach or service disruption.'
       : 'Moderate potential impact. Monitor closely and investigate within standard SLA.',
     riskExplanation: `Average risk score calculated at ${avgRisk}/100 based on standard heuristics.`,
@@ -193,7 +193,7 @@ serve(async (req) => {
     });
 
     const { data: { user }, error: authError } = await userClient.auth.getUser();
-    
+
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token' }),
@@ -243,17 +243,17 @@ serve(async (req) => {
 
     // If AI summary already exists and contains structured format, return it
     // Otherwise regenerate it
-    const hasStructuredFormat = incident.ai_summary && 
-      incident.ai_summary.includes("executiveSummary") && 
+    const hasStructuredFormat = incident.ai_summary &&
+      incident.ai_summary.includes("executiveSummary") &&
       incident.ai_summary.includes("businessImpact");
-    
+
     if (hasStructuredFormat) {
       console.log('Structured AI summary already exists for incident:', incidentId);
       return new Response(
-        JSON.stringify({ 
-          summary: incident.ai_summary, 
+        JSON.stringify({
+          summary: incident.ai_summary,
           ai_used: incident.ai_summary.includes('confidenceScore') && !incident.ai_summary.includes('Rule-based fallback analysis used due to AI service unavailability'),
-          cached: true 
+          cached: true
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
