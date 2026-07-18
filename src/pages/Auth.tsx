@@ -249,7 +249,7 @@ export default function Auth() {
                 >
                   <UserCheck className="h-5 w-5" />
                   <div className="text-left">
-                    <div className="font-medium text-sm">Defense Analyst</div>
+                    <div className="font-medium text-sm">Security Team Member</div>
                     <div className="text-xs opacity-70">View & analyze</div>
                   </div>
                 </button>

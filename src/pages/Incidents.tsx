@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { FileWarning, Zap, Search } from "lucide-react";
+import { FileWarning, Zap, Search, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { useIncidents, Incident } from "@/hooks/useIncidents";
 import { IncidentDetailModal } from "@/components/incidents/IncidentDetailModal";
 import { formatDistanceToNow } from "date-fns";
@@ -59,6 +60,31 @@ export default function Incidents() {
     setModalOpen(true);
   };
 
+  const handleExportCSV = () => {
+    if (!filteredIncidents || filteredIncidents.length === 0) return;
+    
+    const headers = ["ID", "Reason", "Severity", "Status", "Created At", "Updated At", "Auto Created"];
+    const rows = filteredIncidents.map(i => [
+      i.id,
+      `"${i.incident_reason?.replace(/"/g, '""') || 'Unknown'}"`,
+      i.severity,
+      i.status,
+      i.created_at,
+      i.updated_at,
+      i.auto_created ? 'Yes' : 'No'
+    ]);
+    
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `incidents_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -105,11 +131,15 @@ export default function Incidents() {
 
       {/* Incidents Table */}
       <Card className="bg-card border-border">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="flex items-center gap-2">
             <FileWarning className="h-5 w-5 text-info" />
             All Incidents ({filteredIncidents?.length || 0})
           </CardTitle>
+          <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!filteredIncidents || filteredIncidents.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            CSV Export
+          </Button>
         </CardHeader>
         <CardContent>
           {isLoading ? (

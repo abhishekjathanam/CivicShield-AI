@@ -1,5 +1,6 @@
 import { Shield, ChevronDown, LogOut, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { ORG_ROLE_LABELS } from "@/integrations/supabase/orgTypes";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -17,7 +18,7 @@ export function AppHeader() {
   const { user, role, signOut } = useAuth();
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "User";
-  const roleLabel = role === "admin" ? "Admin" : "Defense Analyst";
+  const roleLabel = role ? ORG_ROLE_LABELS[role as keyof typeof ORG_ROLE_LABELS] || role : "Security Team Member";
 
   return (
     <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4">

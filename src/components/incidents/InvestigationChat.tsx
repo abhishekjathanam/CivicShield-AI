@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot, Send, User, Loader2, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,7 +54,7 @@ export function InvestigationChat({ incidentId }: InvestigationChatProps) {
       const apiMessages = newMessages.map(m => ({ role: m.role, content: m.content }));
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://xbflycdxddoybblhqqqg.supabase.co'}/functions/v1/investigate-chat`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/investigate-chat`,
         {
           method: 'POST',
           headers: {
@@ -131,7 +132,23 @@ export function InvestigationChat({ incidentId }: InvestigationChatProps) {
         <div ref={messagesEndRef} />
       </CardContent>
       
-      <CardFooter className="p-3 border-t bg-muted/10">
+      <CardFooter className="p-3 border-t bg-muted/10 flex-col items-start">
+        <div className="w-full flex flex-wrap gap-2 mb-3">
+          {["Explain this attack.", "Why is it Critical?", "What should we do first?", "What systems are affected?", "Generate an Incident Report."].map((prompt, i) => (
+            <Badge 
+              key={i}
+              variant="outline" 
+              className="cursor-pointer hover:bg-primary/10 text-xs font-normal"
+              onClick={() => {
+                if (!isLoading) {
+                  setInput(prompt);
+                }
+              }}
+            >
+              {prompt}
+            </Badge>
+          ))}
+        </div>
         <div className="flex w-full gap-2 items-end">
           <Textarea
             value={input}

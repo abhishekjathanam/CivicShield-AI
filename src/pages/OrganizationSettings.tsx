@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ORG_ROLE_LABELS, type AppRole, type OrganizationInvitation } from "@/integrations/supabase/orgTypes";
@@ -217,7 +218,16 @@ export default function OrganizationSettings() {
         </div>
       </div>
 
-      <Card>
+      <Tabs defaultValue="organization" className="w-full space-y-6">
+        <TabsList className="bg-muted">
+          <TabsTrigger value="organization">Organization</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="audit">Audit Logs</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="organization" className="space-y-6">
+          <Card>
         <CardHeader>
           <CardTitle>Organization profile</CardTitle>
           <CardDescription>Displayed to your team and used in AI reports.</CardDescription>
@@ -386,6 +396,67 @@ export default function OrganizationSettings() {
           </CardContent>
         </Card>
       )}
+      </TabsContent>
+
+      <TabsContent value="profile" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Preferences</CardTitle>
+            <CardDescription>Manage your personal profile and account settings.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Display Name</Label>
+              <Input defaultValue={user?.user_metadata?.display_name || ""} placeholder="Your Name" disabled />
+              <p className="text-xs text-muted-foreground">Contact your administrator to change your display name.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input defaultValue={user?.email || ""} disabled />
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="notifications" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Notification Preferences</CardTitle>
+            <CardDescription>Choose how you receive alerts and updates.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between border-b pb-4">
+              <div>
+                <p className="font-medium">Critical Alerts</p>
+                <p className="text-sm text-muted-foreground">Receive immediate notifications for critical incidents.</p>
+              </div>
+              <Button variant="outline" size="sm" disabled>Enabled</Button>
+            </div>
+            <div className="flex items-center justify-between border-b pb-4">
+              <div>
+                <p className="font-medium">Daily Summary</p>
+                <p className="text-sm text-muted-foreground">Receive a daily summary of security activity.</p>
+              </div>
+              <Button variant="outline" size="sm">Enable</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="audit" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Audit Logs</CardTitle>
+            <CardDescription>Review recent administrative actions.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-12 text-muted-foreground">
+              <p>Audit logs will appear here once enabled for your organization.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }
