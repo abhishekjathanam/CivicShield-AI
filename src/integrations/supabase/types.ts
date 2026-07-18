@@ -52,15 +52,15 @@ export type Database = {
       }
       alerts: {
         Row: {
-          ai_analysis: string | null
-          ai_used: boolean
-          alert_type: string
+          description: string | null
+          ai_used?: boolean
+          title: string
           created_at: string
           id: string
-          raw_log: Json | null
-          risk_score: number | null
+          raw_data: Json | null
+          risk_score?: number | null
           severity: Database["public"]["Enums"]["alert_severity"]
-          source_system: string
+          source: string
           status: Database["public"]["Enums"]["alert_status"]
           timestamp: string
           updated_at: string
@@ -68,13 +68,13 @@ export type Database = {
         Insert: {
           ai_analysis?: string | null
           ai_used?: boolean
-          alert_type: string
+          title: string
           created_at?: string
           id?: string
           raw_log?: Json | null
           risk_score?: number | null
           severity?: Database["public"]["Enums"]["alert_severity"]
-          source_system: string
+          source: string
           status?: Database["public"]["Enums"]["alert_status"]
           timestamp?: string
           updated_at?: string

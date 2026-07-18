@@ -36,7 +36,7 @@ export function AlertDetailModal({ alert, open, onOpenChange }: AlertDetailModal
     };
   };
 
-  const analysis = parseAnalysis(alert.ai_analysis);
+  const analysis = parseAnalysis(alert.description);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -104,7 +104,7 @@ export function AlertDetailModal({ alert, open, onOpenChange }: AlertDetailModal
           </Card>
 
           {/* AI Analysis */}
-          {alert.ai_analysis && (
+          {alert.description && (
             <div className="space-y-3">
               {analysis.whatHappened && (
                 <Card className="border-info/30 bg-info/5">
