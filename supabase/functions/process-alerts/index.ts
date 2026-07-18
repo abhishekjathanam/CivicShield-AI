@@ -1,6 +1,6 @@
 
 
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 import { sanitizeAlertForPrompt } from "../_shared/sanitize.ts";
 
 // Allowed origins for CORS - restrict to known application domains

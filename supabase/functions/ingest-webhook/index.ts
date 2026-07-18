@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase Admin client
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
