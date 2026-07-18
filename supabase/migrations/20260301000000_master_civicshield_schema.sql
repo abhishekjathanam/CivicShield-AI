@@ -199,20 +199,66 @@ CREATE POLICY "Users can view org audit logs" ON public.audit_logs FOR SELECT US
 
 -- 5. TRIGGERS
 
--- Trigger: Auto-create profile on signup
+-- Trigger: Auto-create profile, organization, and role on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  new_org_id uuid;
+  assigned_role public.app_role;
+  safe_display_name text;
 BEGIN
+  -- 1. Determine safe display name
+  safe_display_name := COALESCE(
+    NEW.raw_user_meta_data ->> 'display_name',
+    split_part(NEW.email, '@', 1),
+    'User'
+  );
+
+  -- 2. Determine role from metadata (from frontend sign up)
+  BEGIN
+    assigned_role := (NEW.raw_user_meta_data->>'role')::public.app_role;
+  EXCEPTION WHEN OTHERS THEN
+    assigned_role := 'analyst'::public.app_role;
+  END;
+
+  IF assigned_role IS NULL THEN
+    assigned_role := 'analyst'::public.app_role;
+  END IF;
+
+  -- 3. Create the profile record first (org_id is null for now)
   INSERT INTO public.profiles (id, email, display_name)
   VALUES (
-    NEW.id, NEW.email, COALESCE(NEW.raw_user_meta_data ->> 'display_name', split_part(NEW.email, '@', 1))
+    NEW.id,
+    COALESCE(NEW.email, ''),
+    safe_display_name
   );
-  
-  -- Default role assignment
+
+  -- 4. Create an organization for the user
+  INSERT INTO public.organizations (name, sector)
+  VALUES (
+    safe_display_name || '''s Organization',
+    'Private'
+  )
+  RETURNING id INTO new_org_id;
+
+  -- 5. Update profile with new organization_id
+  UPDATE public.profiles
+  SET organization_id = new_org_id
+  WHERE id = NEW.id;
+
+  -- 6. Add user as admin to their new organization
+  INSERT INTO public.organization_members (organization_id, user_id, role)
+  VALUES (new_org_id, NEW.id, 'org_admin'::public.app_role);
+
+  -- 7. Add user platform role
   INSERT INTO public.user_roles (user_id, role)
-  VALUES (NEW.id, 'analyst'::app_role)
-  ON CONFLICT DO NOTHING;
-  
+  VALUES (NEW.id, assigned_role)
+  ON CONFLICT (user_id, role) DO NOTHING;
+
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  -- Log the error but still return NEW so auth.users record isn't aborted
+  RAISE WARNING 'handle_new_user trigger failed: %', SQLERRM;
   RETURN NEW;
 END;
 $$;
