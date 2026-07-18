@@ -20,5 +20,9 @@
     "allowJs": true,
     "noUnusedLocals": false,
     "strictNullChecks": false
-  }
+  },
+  "exclude": [
+    "supabase",
+    "supabase/**/*"
+  ]
 }

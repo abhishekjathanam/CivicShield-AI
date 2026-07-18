@@ -1,12 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sanitizeAlertForPrompt } from "../_shared/sanitize.ts";
 
 // Allowed origins for CORS - restrict to known application domains
 const allowedOrigins = [
-  'https://ptohzzgcexxwuxukjiuz.lovableproject.com',
-  'https://ptohzzgcexxwuxukjiuz.lovable.app',
+  'https://qmdqkekxuptqbkkbzsvl.lovableproject.com',
+  'https://qmdqkekxuptqbkkbzsvl.lovable.app',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
