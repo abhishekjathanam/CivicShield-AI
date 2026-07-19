@@ -114,6 +114,7 @@ export type Database = {
           id: string
           last_sync: string | null
           name: string
+          organization_id: string
           records_imported: number | null
           status: string
           type: string
@@ -126,6 +127,7 @@ export type Database = {
           id?: string
           last_sync?: string | null
           name: string
+          organization_id: string
           records_imported?: number | null
           status?: string
           type: string
@@ -138,6 +140,7 @@ export type Database = {
           id?: string
           last_sync?: string | null
           name?: string
+          organization_id?: string
           records_imported?: number | null
           status?: string
           type?: string

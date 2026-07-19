@@ -3,8 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 
 // Allowed origins for CORS - restrict to known application domains
 const allowedOrigins = [
-  'https://qmdqkekxuptqbkkbzsvl.lovableproject.com',
-  'https://qmdqkekxuptqbkkbzsvl.lovable.app',
   'http://localhost:5173',
   'http://localhost:3000',
 ];

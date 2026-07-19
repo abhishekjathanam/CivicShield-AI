@@ -21,7 +21,7 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const [validated, setValidated] = useState(false);
   const [csvContent, setCsvContent] = useState<string>("");
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,9 +41,9 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
       toast.error("Please select a file first");
       return;
     }
-    
+
     setIsValidating(true);
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -51,11 +51,11 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
         setCsvContent(text);
         const firstLine = text.split('\n')[0];
         const parsedHeaders = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-        
+
         if (parsedHeaders.length < 2) {
           throw new Error("Invalid CSV format or insufficient columns");
         }
-        
+
         setHeaders(parsedHeaders);
         setValidated(true);
         toast.success("CSV validated successfully. Found " + parsedHeaders.length + " columns.");
@@ -69,7 +69,7 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
       toast.error("Error reading file");
       setIsValidating(false);
     };
-    
+
     reader.readAsText(file);
   };
 
@@ -81,17 +81,17 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
       // 1. Parse rows and upload alerts
       const rows = csvContent.split('\n').filter(r => r.trim());
       const headerRow = headers.map(h => h.toLowerCase());
-      
+
       const alertsToInsert = [];
       // Skip header row
       for (let i = 1; i < rows.length; i++) {
         // Basic naive CSV split (doesn't handle commas in quotes)
         const cols = rows[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-        
+
         const alert_type = cols[headerRow.indexOf('alert_type')] || cols[headerRow.indexOf('type')] || 'CSV Import Alert';
         const severity = cols[headerRow.indexOf('severity')] || 'Medium';
         const source = cols[headerRow.indexOf('source_system')] || cols[headerRow.indexOf('source')] || 'CSV Upload';
-        
+
         alertsToInsert.push({
           organization_id: organization.id,
           alert_type,
@@ -100,7 +100,7 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
           raw_log: { original_row: rows[i], imported_from: file.name }
         });
       }
-      
+
       if (alertsToInsert.length > 0) {
         const { error: insertError } = await supabase.from('alerts').insert(alertsToInsert);
         if (insertError) throw insertError;
@@ -118,7 +118,7 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
       });
 
       if (error) throw error;
-      
+
       toast.success(`Successfully imported ${alertsToInsert.length} alerts!`);
       onSuccess();
     } catch (error) {
@@ -131,21 +131,21 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
 
   return (
     <div className="space-y-4">
-      
+
       {!file ? (
-        <div 
+        <div
           className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors"
           onClick={() => fileInputRef.current?.click()}
         >
           <UploadCloud className="h-10 w-10 text-muted-foreground mb-4" />
           <h4 className="text-sm font-medium mb-1">Drag and drop CSV or click to browse</h4>
           <p className="text-xs text-muted-foreground">Support for .csv files up to 50MB</p>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            accept=".csv" 
-            className="hidden" 
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".csv"
+            className="hidden"
           />
         </div>
       ) : (
@@ -162,7 +162,7 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
           </Button>
         </div>
       )}
-      
+
       {validated && headers.length > 0 && (
         <div className="space-y-3 pt-2">
           <Label>Detected Columns</Label>
@@ -178,7 +178,7 @@ export function CSVUploadForm({ connector, onSuccess, onClose }: Props) {
               </span>
             )}
           </div>
-          
+
           <div className="bg-warning/10 text-warning text-xs p-3 rounded-md flex gap-2 items-start mt-4">
             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>Duplicate Detection is enabled. Rows with matching hashes will be skipped during ingestion.</span>
