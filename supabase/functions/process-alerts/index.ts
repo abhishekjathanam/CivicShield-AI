@@ -3,21 +3,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sanitizeAlertForPrompt } from "../_shared/sanitize.ts";
 
-// Allowed origins for CORS - restrict to known application domains
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && allowedOrigins.includes(origin) 
-    ? origin 
-    : allowedOrigins[0];
-    
+// CORS — invoked from the app UI and from the Cron worker. Allow any origin;
+// auth (service-role key or admin JWT) still gates real access below.
+function getCorsHeaders(_origin: string | null) {
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers':
+      'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
 }
 
@@ -254,11 +247,45 @@ Deno.serve(async (req) => {
 
     console.log('Starting alert correlation process...');
 
-    // Fetch all unprocessed alerts (New or Reviewed, not yet Correlated)
+    // Step 1: Analyze any 'New' alerts via the analyze-alert function.
+    // analyze-alert will set risk score, adjusted severity, ai_analysis, and
+    // move the alert to 'Reviewed' (or auto-create an incident if it matches
+    // a per-alert correlation rule).
+    const { data: newAlerts } = await supabase
+      .from('alerts')
+      .select('*')
+      .eq('status', 'New')
+      .order('timestamp', { ascending: true })
+      .limit(50);
+
+    let analyzed = 0;
+    if (newAlerts && newAlerts.length > 0) {
+      console.log(`Analyzing ${newAlerts.length} new alerts via analyze-alert`);
+      const analyzeUrl = `${supabaseUrl}/functions/v1/analyze-alert`;
+      for (const alert of newAlerts) {
+        try {
+          const resp = await fetch(analyzeUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({ alert }),
+          });
+          if (resp.ok) analyzed++;
+          else console.error('analyze-alert failed', await resp.text());
+        } catch (e) {
+          console.error('analyze-alert invocation error', e);
+        }
+      }
+    }
+
+    // Step 2: Fetch all remaining unprocessed alerts (Reviewed, not yet Correlated)
+    // for multi-alert correlation groups.
     const { data: alerts, error: fetchError } = await supabase
       .from('alerts')
       .select('*')
-      .in('status', ['New', 'Reviewed'])
+      .in('status', ['Reviewed'])
       .order('timestamp', { ascending: true });
 
     if (fetchError) {
@@ -269,7 +296,7 @@ Deno.serve(async (req) => {
     if (!alerts || alerts.length === 0) {
       console.log('No unprocessed alerts found');
       return new Response(
-        JSON.stringify({ message: 'No unprocessed alerts found', incidents_created: 0 }),
+        JSON.stringify({ message: 'No unprocessed alerts found', alerts_analyzed: analyzed, incidents_created: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -443,6 +470,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         message: 'Correlation complete',
+        alerts_analyzed: analyzed,
         alerts_processed: processedAlertIds.size,
         incidents_created: incidentsCreated,
       }),

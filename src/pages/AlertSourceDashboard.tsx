@@ -129,6 +129,20 @@ export default function AlertSourceDashboard() {
 
       if (error) throw error;
 
+      // Fire-and-forget: kick off AI analysis for each freshly-inserted alert so
+      // the analyst portal sees results (risk score, adjusted severity,
+      // correlated incidents) without waiting for the Cron cycle.
+      const { data: fresh } = await supabase
+        .from("alerts")
+        .select("*")
+        .eq("organization_id", organization.id)
+        .eq("status", "New")
+        .order("created_at", { ascending: false })
+        .limit(alertsToInsert.length);
+      fresh?.forEach((alert) => {
+        supabase.functions.invoke("analyze-alert", { body: { alert } }).catch(() => {});
+      });
+
       toast({
         title: "Sample Alerts Generated",
         description: "5 alerts have been injected and will be automatically processed by AI.",
@@ -195,6 +209,17 @@ export default function AlertSourceDashboard() {
         .single();
 
       if (error) throw error;
+
+      // Fire-and-forget: run AI analysis so the analyst portal reflects the
+      // alert immediately (Cron will also pick it up as a safety net).
+      const { data: fresh } = await supabase
+        .from("alerts")
+        .select("*")
+        .eq("id", data.id)
+        .single();
+      if (fresh) {
+        supabase.functions.invoke("analyze-alert", { body: { alert: fresh } }).catch(() => {});
+      }
 
       setLastSubmission({
         id: data.id,
