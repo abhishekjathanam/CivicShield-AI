@@ -65,7 +65,7 @@ export default function Reports() {
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div className="print:hidden">
         <PageHeader 
-          title="Security Reports" 
+          heading="Security Reports" 
           description="Generate and export automated AI-driven security reports for your organization."
         />
       </div>
