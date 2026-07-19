@@ -6,6 +6,7 @@ import { ConnectorConfig } from "@/pages/Connectors";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   connector: ConnectorConfig;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function SupabaseForm({ connector, onSuccess, onClose }: Props) {
+  const { organization } = useAuth();
   const [projectUrl, setProjectUrl] = useState("");
   const [anonKey, setAnonKey] = useState("");
   const [serviceRoleKey, setServiceRoleKey] = useState("");
@@ -59,12 +61,17 @@ export function SupabaseForm({ connector, onSuccess, onClose }: Props) {
       toast.error("Please validate the connection first");
       return;
     }
+    if (!organization) {
+      toast.error("No organization selected");
+      return;
+    }
 
     setIsSaving(true);
     try {
       const config = { projectUrl, anonKey, serviceRoleKey };
       
       const { error } = await supabase.from('data_connectors').insert({
+        organization_id: organization.id,
         name: `Supabase Integration (${new URL(projectUrl).hostname})`,
         type: connector.type,
         status: 'active',
