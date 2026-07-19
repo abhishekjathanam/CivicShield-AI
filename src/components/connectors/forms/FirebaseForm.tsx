@@ -7,6 +7,7 @@ import { ConnectorConfig } from "@/pages/Connectors";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   connector: ConnectorConfig;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function FirebaseForm({ connector, onSuccess, onClose }: Props) {
+  const { organization } = useAuth();
   const [projectId, setProjectId] = useState("");
   const [collectionName, setCollectionName] = useState("");
   const [serviceAccount, setServiceAccount] = useState("");
@@ -49,12 +51,17 @@ export function FirebaseForm({ connector, onSuccess, onClose }: Props) {
 
   const handleSave = async () => {
     if (!validated) return;
+    if (!organization) {
+      toast.error("No organization selected");
+      return;
+    }
 
     setIsSaving(true);
     try {
       const config = { projectId, collectionName, serviceAccount: JSON.parse(serviceAccount) };
       
       const { error } = await supabase.from('data_connectors').insert({
+        organization_id: organization.id,
         name: `Firestore Integration (${projectId})`,
         type: connector.type,
         status: 'active',
