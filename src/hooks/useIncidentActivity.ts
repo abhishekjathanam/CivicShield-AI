@@ -58,7 +58,7 @@ export function useLogIncidentAction() {
           user_id: user.id,
           action_type: actionType,
           action_label: actionLabel,
-          is_demo: true,
+          is_demo: false,
           metadata,
         }])
         .select()
