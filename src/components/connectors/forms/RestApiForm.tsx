@@ -7,6 +7,7 @@ import { ConnectorConfig } from "@/pages/Connectors";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   connector: ConnectorConfig;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function RestApiForm({ connector, onSuccess, onClose }: Props) {
+  const { organization } = useAuth();
   const [endpointUrl, setEndpointUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
@@ -60,6 +62,10 @@ export function RestApiForm({ connector, onSuccess, onClose }: Props) {
 
   const handleSave = async () => {
     if (!validated) return;
+    if (!organization) {
+      toast.error("No organization selected");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -71,6 +77,7 @@ export function RestApiForm({ connector, onSuccess, onClose }: Props) {
       };
       
       const { error } = await supabase.from('data_connectors').insert({
+        organization_id: organization.id,
         name: `REST API (${new URL(endpointUrl).hostname})`,
         type: connector.type,
         status: 'active',
